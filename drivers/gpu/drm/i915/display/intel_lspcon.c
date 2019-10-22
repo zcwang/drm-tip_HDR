@@ -35,6 +35,8 @@
 #define LSPCON_VENDOR_PARADE_OUI 0x001CF8
 #define LSPCON_VENDOR_MCA_OUI 0x0060AD
 
+#define DPCD_MCA_LSPCON_HDR_STATUS	0x70003
+
 /* AUX addresses to write MCA AVI IF */
 #define LSPCON_MCA_AVI_IF_WRITE_OFFSET 0x5C0
 #define LSPCON_MCA_AVI_IF_CTRL 0x5DF
@@ -99,6 +101,31 @@ static bool lspcon_detect_vendor(struct intel_lspcon *lspcon)
 	default:
 		DRM_ERROR("Invalid/Unknown vendor OUI\n");
 		return false;
+	}
+
+	return true;
+}
+
+static bool lspcon_detect_hdr_capability(struct intel_lspcon *lspcon)
+{
+	struct intel_dp *dp = lspcon_to_intel_dp(lspcon);
+	u8 hdr_caps;
+	int ret;
+
+	/* Enable HDR for MCA based LSPCON devices */
+	if (lspcon->vendor == LSPCON_VENDOR_MCA)
+		ret = drm_dp_dpcd_read(&dp->aux, DPCD_MCA_LSPCON_HDR_STATUS,
+				       &hdr_caps, 1);
+	else
+		return false;
+
+	if (ret < 0) {
+		DRM_DEBUG_KMS("hdr capability detection failed\n");
+		lspcon->hdr_supported = false;
+		return false;
+	} else if (hdr_caps & 0x1) {
+		DRM_DEBUG_KMS("lspcon capable of HDR\n");
+		lspcon->hdr_supported = true;
 	}
 
 	return true;
@@ -578,6 +605,11 @@ bool lspcon_init(struct intel_digital_port *intel_dig_port)
 
 	if (!lspcon_detect_vendor(lspcon)) {
 		DRM_ERROR("LSPCON vendor detection failed\n");
+		return false;
+	}
+
+	if (!lspcon_detect_hdr_capability(lspcon)) {
+		DRM_ERROR("LSPCON hdr detection failed\n");
 		return false;
 	}
 
