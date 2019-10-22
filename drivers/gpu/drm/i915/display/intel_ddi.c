@@ -3856,6 +3856,8 @@ static void intel_enable_ddi_dp(struct intel_encoder *encoder,
 {
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	struct intel_dp *intel_dp = enc_to_intel_dp(&encoder->base);
+	struct intel_lspcon *lspcon =
+				enc_to_intel_lspcon(&encoder->base);
 	enum port port = encoder->port;
 
 	if (port == PORT_A && INTEL_GEN(dev_priv) < 9)
@@ -3865,6 +3867,12 @@ static void intel_enable_ddi_dp(struct intel_encoder *encoder,
 	intel_psr_enable(intel_dp, crtc_state);
 	intel_dp_vsc_enable(intel_dp, crtc_state, conn_state);
 	intel_dp_hdr_metadata_enable(intel_dp, crtc_state, conn_state);
+
+	/* Set the infoframe for NON modeset cases as well */
+	if (lspcon->active && lspcon->hdr_supported &&
+	    conn_state->hdr_metadata_changed)
+		intel_dp_setup_hdr_metadata_infoframe_sdp(intel_dp, crtc_state,
+							  conn_state);
 	intel_edp_drrs_enable(intel_dp, crtc_state);
 
 	if (crtc_state->has_audio)

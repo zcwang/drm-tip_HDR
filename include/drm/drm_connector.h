@@ -661,6 +661,7 @@ struct drm_connector_state {
 	 * DRM blob property for HDR output metadata
 	 */
 	struct drm_property_blob *hdr_output_metadata;
+	u8 hdr_metadata_changed : 1;
 };
 
 /**

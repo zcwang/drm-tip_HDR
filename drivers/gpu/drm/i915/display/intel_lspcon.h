@@ -14,6 +14,7 @@ struct intel_crtc_state;
 struct intel_digital_port;
 struct intel_encoder;
 struct intel_lspcon;
+struct intel_dp;
 
 bool lspcon_init(struct intel_digital_port *intel_dig_port);
 void lspcon_resume(struct intel_lspcon *lspcon);
@@ -39,4 +40,7 @@ void lspcon_drm_write_infoframe(struct intel_encoder *encoder,
 				const struct intel_crtc_state *crtc_state,
 				unsigned int type,
 				const void *frame, ssize_t len);
+void intel_dp_setup_hdr_metadata_infoframe_sdp(struct intel_dp *intel_dp,
+					       const struct intel_crtc_state *crtc_state,
+					       const struct drm_connector_state *conn_state);
 #endif /* __INTEL_LSPCON_H__ */

@@ -4660,7 +4660,7 @@ intel_dp_setup_vsc_sdp(struct intel_dp *intel_dp,
 			crtc_state, DP_SDP_VSC, &vsc_sdp, sizeof(vsc_sdp));
 }
 
-static void
+void
 intel_dp_setup_hdr_metadata_infoframe_sdp(struct intel_dp *intel_dp,
 					  const struct intel_crtc_state *crtc_state,
 					  const struct drm_connector_state *conn_state)
