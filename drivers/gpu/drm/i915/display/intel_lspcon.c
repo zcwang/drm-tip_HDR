@@ -460,27 +460,41 @@ void lspcon_write_infoframe(struct intel_encoder *encoder,
 			    unsigned int type,
 			    const void *frame, ssize_t len)
 {
-	bool ret;
+	bool ret = true;
 	struct intel_dp *intel_dp = enc_to_intel_dp(&encoder->base);
 	struct intel_lspcon *lspcon = enc_to_intel_lspcon(&encoder->base);
 
-	/* LSPCON only needs AVI IF */
-	if (type != HDMI_INFOFRAME_TYPE_AVI)
+	if (!(type == HDMI_INFOFRAME_TYPE_AVI ||
+	      type == HDMI_PACKET_TYPE_GAMUT_METADATA))
 		return;
 
-	if (lspcon->vendor == LSPCON_VENDOR_MCA)
-		ret = _lspcon_write_avi_infoframe_mca(&intel_dp->aux,
-						      frame, len);
-	else
-		ret = _lspcon_write_avi_infoframe_parade(&intel_dp->aux,
-							 frame, len);
+	/*
+	 * Supporting HDR on MCA LSPCON
+	 * Todo: Add support for Parade later
+	 */
+	if (type == HDMI_PACKET_TYPE_GAMUT_METADATA &&
+	    lspcon->vendor != LSPCON_VENDOR_MCA)
+		return;
+
+	if (lspcon->vendor == LSPCON_VENDOR_MCA) {
+		if (type == HDMI_INFOFRAME_TYPE_AVI)
+			ret = _lspcon_write_avi_infoframe_mca(&intel_dp->aux,
+							      frame, len);
+		else if (type == HDMI_PACKET_TYPE_GAMUT_METADATA)
+			lspcon_drm_write_infoframe(encoder, crtc_state,
+						   HDMI_PACKET_TYPE_GAMUT_METADATA,
+						   frame, VIDEO_DIP_DATA_SIZE);
+	} else {
+		ret = _lspcon_write_avi_infoframe_parade(&intel_dp->aux, frame,
+							 len);
+	}
 
 	if (!ret) {
-		DRM_ERROR("Failed to write AVI infoframes\n");
+		DRM_ERROR("Failed to write infoframes\n");
 		return;
 	}
 
-	DRM_DEBUG_DRIVER("AVI infoframes updated successfully\n");
+	DRM_DEBUG_DRIVER("Infoframes updated successfully\n");
 }
 
 void lspcon_read_infoframe(struct intel_encoder *encoder,
